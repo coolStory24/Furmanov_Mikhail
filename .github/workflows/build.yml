@@ -1,10 +1,10 @@
-name: Simple CI job
+name: Print date CI job
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'dev']
   pull_request:
-    branches: ['main']
+    branches: ['main', 'dev']
 
 jobs:
   build:
