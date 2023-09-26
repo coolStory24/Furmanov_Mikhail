@@ -1,0 +1,15 @@
+name: Print date CI job
+
+on:
+  push:
+    branches: ['master', 'dev']
+  pull_request:
+    branches: ['master', 'dev']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print date to console
+        run: |
+          echo $(date +"%A, %b %d, %Y %H:%M:%S")
