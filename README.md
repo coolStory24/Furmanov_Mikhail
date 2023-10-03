@@ -1,1 +1,0 @@
-# Furmanov_Mikhail
