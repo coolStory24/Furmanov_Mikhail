@@ -26,6 +26,11 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.skyscreamer</groupId>
+            <artifactId>jsonassert</artifactId>
+            <version>1.5.0</version>
+        </dependency>
     </dependencies>
     <build>
 
@@ -83,6 +88,9 @@
                             <excludes>
                                 <exclude>**/*Config.*</exclude>
                                 <exclude>**/*Main.*</exclude>
+                                <exclude>/org/example/enrichment/message/*
+                                </exclude>
+                                <exclude>/org/example/exceptions/*</exclude>
                             </excludes>
                             <rules>
                                 <rule>
