@@ -10,15 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) {
+  public static void main(String[] args) {
 
-      Sort[] sorts = {new MergeSort(10), new BubbleSort(5), new MergeSort(100), new MergeSort(50)};
-      SortStrategy sortStrategy = new SortStrategy(sorts);
+    Sort[] sorts = {new MergeSort(10), new BubbleSort(5), new MergeSort(100), new MergeSort(50)};
+    SortStrategy sortStrategy = new SortStrategy(sorts);
 
-      List<Integer> arr = new ArrayList<>(List.of(1, 4, 2, 32, 2, 6, 4, 4, 4, 6, 4));
+    List<Integer> arr = new ArrayList<>(List.of(1, 4, 2, 32, 2, 6, 4, 4, 4, 6, 4));
 
-      var sortedArr = sortStrategy.sort(arr, SortingTypes.BUBBLE_SORT);
-      System.out.println(sortedArr);
-      System.out.println(arr);
-    }
+    var sortedArr = sortStrategy.sort(arr, SortingTypes.BUBBLE_SORT);
+    System.out.println(sortedArr);
+    System.out.println(arr);
+  }
 }
