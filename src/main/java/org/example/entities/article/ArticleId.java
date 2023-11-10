@@ -1,17 +1,12 @@
 package org.example.entities.article;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Objects;
 
 public class ArticleId {
-  private static final AtomicLong currentId = new AtomicLong(0);
   private final long id;
 
-  private ArticleId(long id) {
+  public ArticleId(long id) {
     this.id = id;
-  }
-
-  static public ArticleId generateId() {
-    return new ArticleId(currentId.getAndIncrement());
   }
 
   public long getId() {
@@ -21,5 +16,18 @@ public class ArticleId {
   @Override
   public String toString() {
     return Long.toString(id);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ArticleId articleId = (ArticleId) o;
+    return id == articleId.id;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }

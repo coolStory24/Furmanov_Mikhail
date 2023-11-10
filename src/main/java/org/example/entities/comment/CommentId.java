@@ -1,20 +1,33 @@
 package org.example.entities.comment;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Objects;
 
 public class CommentId {
-  private static final AtomicLong currentId = new AtomicLong(0);
   private final long id;
 
-  private CommentId(long id) {
+  public CommentId(long id) {
     this.id = id;
-  }
-
-  static public CommentId generateId() {
-    return new CommentId(currentId.getAndIncrement());
   }
 
   public long getId() {
     return id;
+  }
+
+  @Override
+  public String toString() {
+    return Long.toString(id);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CommentId commentId = (CommentId) o;
+    return id == commentId.id;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }
