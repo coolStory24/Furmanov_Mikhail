@@ -1,24 +1,37 @@
 package org.example;
 
-import org.example.enums.SortingTypes;
-import org.example.sort.BubbleSort;
-import org.example.sort.MergeSort;
-import org.example.sort.Sort;
-import org.example.sort.SortStrategy;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.controller.ArticleController;
+import org.example.controller.ArticleTemplateController;
+import org.example.repository.InMemoryArticleRepository;
+import org.example.service.ArticleService;
+import org.example.template.TemplateFactory;
+import spark.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
+
   public static void main(String[] args) {
+    Service service = Service.ignite();
+    ObjectMapper objectMapper = new ObjectMapper();
+    var articleService = new ArticleService(new InMemoryArticleRepository());
 
-    Sort[] sorts = {new MergeSort(10), new BubbleSort(5), new MergeSort(100), new MergeSort(50)};
-    SortStrategy sortStrategy = new SortStrategy(sorts);
+    Application application = new Application(
+      List.of(
+        new ArticleController(
+          service,
+          objectMapper,
+          articleService
+        ),
+        new ArticleTemplateController(
+          service,
+          articleService,
+          TemplateFactory.freeMarkerEngine()
+        )
+      )
+    );
 
-    List<Integer> arr = new ArrayList<>(List.of(1, 4, 2, 32, 2, 6, 4, 4, 4, 6, 4));
-
-    var sortedArr = sortStrategy.sort(arr, SortingTypes.BUBBLE_SORT);
-    System.out.println(sortedArr);
-    System.out.println(arr);
+    application.start();
   }
 }

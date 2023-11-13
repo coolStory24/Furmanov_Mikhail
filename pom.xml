@@ -31,6 +31,37 @@
             <artifactId>jsonassert</artifactId>
             <version>1.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-core</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-template-freemarker</artifactId>
+            <version>2.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.4.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
 
@@ -88,9 +119,11 @@
                             <excludes>
                                 <exclude>**/*Config.*</exclude>
                                 <exclude>**/*Main.*</exclude>
+                                <exclude>/org/example/sort/*</exclude>
                                 <exclude>/org/example/enrichment/message/*
                                 </exclude>
-                                <exclude>/org/example/exceptions/*</exclude>
+                                <exclude>**/*exceptions/*</exclude>
+                                <exclude>**/*template/*</exclude>
                             </excludes>
                             <rules>
                                 <rule>
@@ -99,7 +132,7 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.55</minimum>
+                                            <minimum>0.60</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
