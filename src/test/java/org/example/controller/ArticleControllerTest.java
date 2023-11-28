@@ -1,16 +1,19 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.example.Application;
-import org.example.controller.response.AddCommentResponse;
-import org.example.controller.response.CreateArticleResponse;
-import org.example.controller.response.FindArticleResponse;
-import org.example.repository.InMemoryArticleRepository;
-import org.example.service.ArticleService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.example.article.ArticleService;
+import org.example.article.SQLArticleRepository;
+import org.example.article.controller.ArticleController;
+import org.example.article.controller.dto.response.AddCommentResponse;
+import org.example.article.controller.dto.response.CreateArticleResponse;
+import org.example.article.controller.dto.response.FindArticleResponse;
+import org.example.transaction.JdbiTransactionManager;
+import org.example.transaction.TransactionManager;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.*;
 import spark.Service;
 
 import java.net.URI;
@@ -22,13 +25,24 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("disabled until sql tests")
 @DisplayName("Test article controller")
 class ArticleControllerTest {
   private Service service;
+  private static Config config;
+  private static Jdbi jdbi;
+  private static TransactionManager transactionManager;
 
   @BeforeEach
   void beforeEach() {
     service = Service.ignite();
+  }
+
+  @BeforeAll
+  static void beforeAll() {
+    config = ConfigFactory.load();
+    jdbi = Jdbi.create(config.getString("app.database.url"), config.getString("app.database.user"), config.getString("app.database.password"));
+    TransactionManager transactionManager = new JdbiTransactionManager(jdbi);
   }
 
   @AfterEach
@@ -40,7 +54,8 @@ class ArticleControllerTest {
   @Test
   @DisplayName("E2E article controller test")
   void shouldUpdateArticle() throws Exception {
-    ArticleService articleService = new ArticleService(new InMemoryArticleRepository());
+
+    ArticleService articleService = new ArticleService(new SQLArticleRepository(jdbi), transactionManager);
     ObjectMapper objectMapper = new ObjectMapper();
     Application application = new Application(
       List.of(new ArticleController(
@@ -158,7 +173,7 @@ class ArticleControllerTest {
     assertTrue(findArticleResponse.tags().contains("weekly"));
     assertFalse(findArticleResponse.tags().contains("daily"));
     assertEquals("Sport news", findArticleResponse.name());
-    assertEquals(0, findArticleResponse.comments().size());
+    assertEquals(0, findArticleResponse.comments());
 
     // delete article
     HttpResponse<String> responseToDeleteArticle = HttpClient.newHttpClient()
