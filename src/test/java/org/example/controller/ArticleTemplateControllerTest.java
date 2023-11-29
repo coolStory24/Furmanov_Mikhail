@@ -5,7 +5,10 @@ import org.example.article.Article;
 import org.example.article.ArticleService;
 import org.example.article.controller.ArticleTemplateController;
 import org.example.template.TemplateFactory;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import spark.Service;
 import spark.template.freemarker.FreeMarkerEngine;
@@ -21,7 +24,6 @@ import java.util.UUID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Disabled("disabled until sql tests")
 @DisplayName("Test template article controller")
 class ArticleTemplateControllerTest {
   private Service service;
@@ -83,6 +85,8 @@ class ArticleTemplateControllerTest {
           .build(),
         HttpResponse.BodyHandlers.ofString(UTF_8)
       );
+
+    System.out.println(responseToGetStaticHTML.body());
 
     assertTrue(responseToGetStaticHTML.body().contains("""
               <td>Technology Trends</td>

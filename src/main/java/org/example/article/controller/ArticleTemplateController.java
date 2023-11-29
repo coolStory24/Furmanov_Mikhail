@@ -37,7 +37,7 @@ public class ArticleTemplateController implements Controller {
         article -> Map.of(
           "name", article.getName(),
           "comments", Long.toString(article.getComments()),
-          "tags", article.getTags().toString())
+          "tags", String.join(", ", article.getTags()))
       ).toList();
 
       Map<String, Object> model = new HashMap<>();

@@ -65,7 +65,7 @@ public class ArticleController implements Controller {
         return objectMapper.writeValueAsString(new FindArticleResponse(article.getId(), article.getName(), article.getTags(), article.getTrending(), article.getComments()));
       } catch (ArticleFindException e) {
         LOG.warn("Cannot find article", e);
-        response.status(HttpStatus.BAD_REQUEST_400);
+        response.status(HttpStatus.NOT_FOUND_404);
         return objectMapper.writeValueAsString(new ErrorResponse(e.getMessage()));
       } catch (RuntimeException e) {
         LOG.error("Unhandled error", e);

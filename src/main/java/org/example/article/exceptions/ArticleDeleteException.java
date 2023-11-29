@@ -6,4 +6,3 @@ public class ArticleDeleteException extends RuntimeException {
     super(message, e);
   }
 }
-

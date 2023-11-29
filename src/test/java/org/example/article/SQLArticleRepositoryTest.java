@@ -13,8 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.sql.SQLException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 class SQLArticleRepositoryTest {
@@ -26,12 +25,7 @@ class SQLArticleRepositoryTest {
   @BeforeAll
   static void beforeAll() {
     String postgresJdbcUrl = POSTGRES.getJdbcUrl();
-    Flyway flyway =
-      Flyway.configure()
-        .outOfOrder(true)
-        .locations("classpath:db/migrations")
-        .dataSource(postgresJdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword())
-        .load();
+    Flyway flyway = Flyway.configure().outOfOrder(true).locations("classpath:db/migrations").dataSource(postgresJdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword()).load();
     flyway.migrate();
     jdbi = Jdbi.create(postgresJdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword());
   }
@@ -77,5 +71,36 @@ class SQLArticleRepositoryTest {
     }
     assertEquals(newName, article.getName());
     assertEquals(articleId, article.getId());
+  }
+
+  @Test
+  @DisplayName("Should delete article")
+  void shouldDeleteArticle() {
+    ArticleRepository repository = new SQLArticleRepository(jdbi);
+    var articleName = "new article";
+    var articleTags = List.of("news", "daily");
+
+    long articleId = repository.create(articleName, articleTags);
+    repository.delete(articleId);
+
+    Exception exception = assertThrows(RuntimeException.class, () -> repository.findById(articleId));
+
+    String expectedMessage = "Expected at least one element, but found none";
+    String actualMessage = exception.getMessage();
+
+    assertEquals(actualMessage, expectedMessage);
+  }
+
+  @Test
+  @DisplayName("Should create multiple articles")
+  void shouldCreateFindAllArticles() {
+    ArticleRepository repository = new SQLArticleRepository(jdbi);
+
+    long firstArticleId = repository.create("First article", List.of("first", "news"));
+    long secondArticleId = repository.create("Second article", List.of("second", "news"));
+
+    List<Article> articles = repository.findAll();
+
+    assertEquals(2, articles.size());
   }
 }

@@ -6,4 +6,3 @@ public class ArticleFindException extends RuntimeException {
     super(message, e);
   }
 }
-

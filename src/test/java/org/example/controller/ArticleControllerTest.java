@@ -1,8 +1,6 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.example.Application;
 import org.example.article.ArticleService;
 import org.example.article.SQLArticleRepository;
@@ -10,10 +8,17 @@ import org.example.article.controller.ArticleController;
 import org.example.article.controller.dto.response.AddCommentResponse;
 import org.example.article.controller.dto.response.CreateArticleResponse;
 import org.example.article.controller.dto.response.FindArticleResponse;
+import org.example.comment.CommentService;
+import org.example.comment.SQLCommentRepository;
+import org.example.comment.controller.CommentController;
 import org.example.transaction.JdbiTransactionManager;
 import org.example.transaction.TransactionManager;
+import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.*;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import spark.Service;
 
 import java.net.URI;
@@ -25,13 +30,15 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Disabled("disabled until sql tests")
 @DisplayName("Test article controller")
+@Testcontainers
 class ArticleControllerTest {
   private Service service;
-  private static Config config;
   private static Jdbi jdbi;
   private static TransactionManager transactionManager;
+
+  @Container
+  public static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:13");
 
   @BeforeEach
   void beforeEach() {
@@ -40,9 +47,11 @@ class ArticleControllerTest {
 
   @BeforeAll
   static void beforeAll() {
-    config = ConfigFactory.load();
-    jdbi = Jdbi.create(config.getString("app.database.url"), config.getString("app.database.user"), config.getString("app.database.password"));
-    TransactionManager transactionManager = new JdbiTransactionManager(jdbi);
+    String postgresJdbcUrl = POSTGRES.getJdbcUrl();
+    Flyway flyway = Flyway.configure().outOfOrder(true).locations("classpath:db/migrations").dataSource(postgresJdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword()).load();
+    flyway.migrate();
+    jdbi = Jdbi.create(postgresJdbcUrl, POSTGRES.getUsername(), POSTGRES.getPassword());
+    transactionManager = new JdbiTransactionManager(jdbi);
   }
 
   @AfterEach
@@ -56,10 +65,13 @@ class ArticleControllerTest {
   void shouldUpdateArticle() throws Exception {
 
     ArticleService articleService = new ArticleService(new SQLArticleRepository(jdbi), transactionManager);
+    CommentService commentService = new CommentService(new SQLCommentRepository(jdbi), transactionManager, articleService);
     ObjectMapper objectMapper = new ObjectMapper();
     Application application = new Application(
       List.of(new ArticleController(
         service, objectMapper, articleService
+      ), new CommentController(
+        service, objectMapper, commentService
       ))
     );
 
@@ -91,7 +103,7 @@ class ArticleControllerTest {
     assertEquals(201, responseToArticleCreation.statusCode());
     CreateArticleResponse createArticleResponse =
       objectMapper.readValue(responseToArticleCreation.body(), CreateArticleResponse.class);
-    assertEquals(0L, createArticleResponse.id());
+    assertEquals(1L, createArticleResponse.id());
 
 
     // add a comment
@@ -107,7 +119,7 @@ class ArticleControllerTest {
                 """
             )
           )
-          .uri(URI.create("http://localhost:%d/api/add-comment/%d".formatted(service.port(), 0L)))
+          .uri(URI.create("http://localhost:%d/api/comment/%d".formatted(service.port(), 1L)))
           .build(),
         HttpResponse.BodyHandlers.ofString(UTF_8)
       );
@@ -115,7 +127,7 @@ class ArticleControllerTest {
     assertEquals(201, responseToAddingAComment.statusCode());
     AddCommentResponse addCommentResponse =
       objectMapper.readValue(responseToAddingAComment.body(), AddCommentResponse.class);
-    assertEquals(0L, addCommentResponse.commentId());
+    assertTrue(addCommentResponse.commentId().matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"));
 
     // update article
     HttpResponse<String> responseToArticleUpdate = HttpClient.newHttpClient()
@@ -125,7 +137,7 @@ class ArticleControllerTest {
             HttpRequest.BodyPublishers.ofString(
               """
                     {
-                      "id": 0,
+                      "id": 1,
                       "name": "Sport news",
                       "tags": [
                         "sport",
@@ -148,7 +160,7 @@ class ArticleControllerTest {
       .send(
         HttpRequest.newBuilder()
           .DELETE()
-          .uri(URI.create("http://localhost:%d/api/delete-comment?commentId=%d&articleId=%d".formatted(service.port(), 0L, 0L)))
+          .uri(URI.create("http://localhost:%d/api/comment/%s".formatted(service.port(), addCommentResponse.commentId())))
           .build(),
         HttpResponse.BodyHandlers.ofString(UTF_8)
       );
@@ -161,7 +173,7 @@ class ArticleControllerTest {
       .send(
         HttpRequest.newBuilder()
           .GET()
-          .uri(URI.create("http://localhost:%d/api/article/%d".formatted(service.port(), 0L)))
+          .uri(URI.create("http://localhost:%d/api/article/%d".formatted(service.port(), 1L)))
           .build(),
         HttpResponse.BodyHandlers.ofString(UTF_8)
       );
@@ -169,7 +181,7 @@ class ArticleControllerTest {
     assertEquals(200, responseToFindArticle.statusCode());
     FindArticleResponse findArticleResponse =
       objectMapper.readValue(responseToFindArticle.body(), FindArticleResponse.class);
-    assertEquals(0L, findArticleResponse.articleId());
+    assertEquals(1L, findArticleResponse.articleId());
     assertTrue(findArticleResponse.tags().contains("weekly"));
     assertFalse(findArticleResponse.tags().contains("daily"));
     assertEquals("Sport news", findArticleResponse.name());
@@ -180,12 +192,25 @@ class ArticleControllerTest {
       .send(
         HttpRequest.newBuilder()
           .DELETE()
-          .uri(URI.create("http://localhost:%d/api/article/%d".formatted(service.port(), 0L)))
+          .uri(URI.create("http://localhost:%d/api/article/%d".formatted(service.port(), 1L)))
           .build(),
         HttpResponse.BodyHandlers.ofString(UTF_8)
       );
 
     assertEquals(204, responseToDeleteArticle.statusCode());
     assertEquals("", responseToDeleteArticle.body());
+
+    // try to find deleted article
+    HttpResponse<String> responseToFindDeletedArticle = HttpClient.newHttpClient()
+      .send(
+        HttpRequest.newBuilder()
+          .GET()
+          .uri(URI.create("http://localhost:%d/api/article/%d".formatted(service.port(), 1L)))
+          .build(),
+        HttpResponse.BodyHandlers.ofString(UTF_8)
+      );
+
+    assertEquals(404, responseToFindDeletedArticle.statusCode());
+    assertEquals("{\"message\":\"Could not find article with id: 1\"}", responseToFindDeletedArticle.body());
   }
 }
