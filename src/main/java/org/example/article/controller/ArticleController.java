@@ -6,7 +6,10 @@ import org.example.article.ArticleService;
 import org.example.article.controller.dto.request.CreateArticleRequest;
 import org.example.article.controller.dto.request.CreateMultipleArticlesRequest;
 import org.example.article.controller.dto.request.UpdateArticleRequest;
-import org.example.article.controller.dto.response.*;
+import org.example.article.controller.dto.response.CreateArticleResponse;
+import org.example.article.controller.dto.response.CreateMultipleArticlesResponse;
+import org.example.article.controller.dto.response.ErrorResponse;
+import org.example.article.controller.dto.response.FindArticleResponse;
 import org.example.article.exceptions.ArticleCreateException;
 import org.example.article.exceptions.ArticleDeleteException;
 import org.example.article.exceptions.ArticleFindException;
@@ -131,7 +134,7 @@ public class ArticleController implements Controller {
         articleService.update(createArticleRequest.id(), createArticleRequest.name(), createArticleRequest.tags());
         response.status(HttpStatus.ACCEPTED_202);
         LOG.debug("Articles successfully updated");
-        return objectMapper.writeValueAsString(new UpdateArticleResponse());
+        return "{}";
       } catch (ArticleUpdateException e) {
         LOG.warn("Cannot update article", e);
         response.status(HttpStatus.BAD_REQUEST_400);
@@ -153,7 +156,7 @@ public class ArticleController implements Controller {
         articleService.delete(Long.parseLong(id));
         response.status(HttpStatus.NO_CONTENT_204);
         LOG.debug("Articles successfully deleted");
-        return objectMapper.writeValueAsString(new DeleteArticleResponse());
+        return response;
       } catch (ArticleDeleteException e) {
         LOG.warn("Cannot delete article", e);
         response.status(HttpStatus.BAD_REQUEST_400);

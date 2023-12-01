@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.example.article.controller.dto.request.AddCommentRequest;
 import org.example.article.controller.dto.response.AddCommentResponse;
-import org.example.article.controller.dto.response.DeleteCommentResponse;
 import org.example.article.controller.dto.response.ErrorResponse;
 import org.example.article.exceptions.ArticleNotFoundException;
 import org.example.comment.CommentService;
@@ -70,7 +69,7 @@ public class CommentController implements Controller {
         commentService.delete(id);
         response.status(HttpStatus.NO_CONTENT_204);
         LOG.debug("Comment successfully deleted");
-        return objectMapper.writeValueAsString(new DeleteCommentResponse());
+        return response;
       } catch (CommentDeleteException e) {
         LOG.warn("Cannot delete a comment", e);
         response.status(HttpStatus.BAD_REQUEST_400);
